@@ -15,7 +15,7 @@ from .backbone import build_backbone
 from .matcher import build_matcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
-from .transformer import build_transformer
+from .tokenlearning_transformer import build_transformer
 
 
 class DETR(nn.Module):
@@ -75,6 +75,8 @@ class DETR(nn.Module):
         
         hs = self.transformer(self.input_proj(src), mask, self.query_embed.weight, pos[-1])[0]
 
+        # print(f"hs shape: {hs.shape}")
+        # exit()
         outputs_class = self.class_embed(hs)
         outputs_coord = self.bbox_embed(hs).sigmoid()
         out = {'pred_logits': outputs_class[-1], 'pred_boxes': outputs_coord[-1]}

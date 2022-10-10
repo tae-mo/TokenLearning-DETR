@@ -26,6 +26,10 @@ class PositionEmbeddingSine(nn.Module):
         self.scale = scale
 
     def forward(self, tensor_list: NestedTensor):
+        # print(tensor_list.mask) # all False
+        # print(tensor_list.mask.shape)
+        # print(tensor_list.mask.float().sum())
+        # exit()
         x = tensor_list.tensors
         mask = tensor_list.mask
         assert mask is not None
@@ -87,6 +91,9 @@ class PositionEmbeddingLearned(nn.Module):
 
 def build_position_encoding(args):
     N_steps = args.hidden_dim // 2
+    # dummy()
+    # print(N_steps)
+    # exit()
     if args.position_embedding in ('v2', 'sine'):
         # TODO find a better way of exposing other arguments
         position_embedding = PositionEmbeddingSine(N_steps, normalize=True)
@@ -96,3 +103,9 @@ def build_position_encoding(args):
         raise ValueError(f"not supported {args.position_embedding}")
 
     return position_embedding
+
+def dummy():
+    position_embedding = PositionEmbeddingSine(128, normalize=True)
+    dummy = NestedTensor(torch.randn(1, 2048, 200, 200), torch.zeros(1, 200, 200).bool())
+    print(position_embedding(dummy).shape)
+    exit()
