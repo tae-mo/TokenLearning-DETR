@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from einops import rearrange
 
-from .position_encoding import build_position_encoding
+from util.misc import NestedTensor
 
 class TokenLearner(nn.Module):
     def __init__(self, out_token, emb):
@@ -21,6 +21,7 @@ class TokenLearner(nn.Module):
         Returns:
             [elf.out_token x B x emb]: out_tokens
         """
+        
         new_tokens = []
         for mlp in self.mlps:
             # print(f"x device: {x.device}")
@@ -32,10 +33,12 @@ class TokenLearner(nn.Module):
             
             token = self.gap(weighted_x).flatten(2).permute(2, 0, 1) # 1 x B x emb
             new_tokens.append(token)
+            
+        out = torch.cat(new_tokens, dim=0)
         # print(f"before: {x.shape}")
         # print(f"after: {torch.cat(new_tokens, dim=0).shape}")
         # exit()
-        return torch.cat(new_tokens, dim=0) # S x B x emb
+        return out # S x B x emb
 
 class TokenFuser(nn.Module):
     def __init__(self, in_token, emb):

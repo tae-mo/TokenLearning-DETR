@@ -65,7 +65,7 @@ class TokenlearningTransformer(nn.Module):
         encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward,
                                                 dropout, activation, normalize_before)
         encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
-        self.encoder = TransformerEncoder(encoder_layer, learner, num_encoder_layers, encoder_norm, insert_learner=enc_insert_learner)
+        self.encoder = TransformerEncoder(encoder_layer, learner, fuser, num_encoder_layers, encoder_norm, insert_learner=enc_insert_learner)
 
         decoder_layer = TransformerDecoderLayer(d_model, nhead, dim_feedforward,
                                                 dropout, activation, normalize_before)
@@ -104,10 +104,12 @@ class TokenlearningTransformer(nn.Module):
 
 class TransformerEncoder(nn.Module):
 
-    def __init__(self, encoder_layer, learner, num_layers, norm=None, insert_learner=0.5):
+    def __init__(self, encoder_layer, learner, fuser, num_layers, norm=None, insert_learner=0.5):
         super().__init__()
         self.layers = _get_clones(encoder_layer, num_layers)
         self.learner = learner
+        self.fuser = fuser
+        
         self.num_layers = num_layers
         self.norm = norm
         self.insert_learner = insert_learner
@@ -120,10 +122,15 @@ class TransformerEncoder(nn.Module):
         output = src
 
         for i, layer in enumerate(self.layers, 1):
-            if i == int(self.num_layers * self.insert_learner):
-                self.learner(output, h, w)
-            output = layer(output, src_mask=mask,
-                           src_key_padding_mask=src_key_padding_mask, pos=pos)
+            if i <= int(self.num_layers * self.insert_learner):
+                shortcut = output
+                output = self.learner(output, h, w)
+                output = layer(output, src_mask=mask,
+                        src_key_padding_mask=src_key_padding_mask)
+                output = self.fuser(output, shortcut)
+            else:    
+                output = layer(output, src_mask=mask,
+                            src_key_padding_mask=src_key_padding_mask, pos=pos)
 
         if self.norm is not None:
             output = self.norm(output)

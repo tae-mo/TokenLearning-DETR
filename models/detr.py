@@ -16,6 +16,7 @@ from .matcher import build_matcher
 from .segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
                            dice_loss, sigmoid_focal_loss)
 from .tokenlearning_transformer import build_transformer
+from .position_encoding import PositionEmbeddingSine
 
 
 class DETR(nn.Module):
