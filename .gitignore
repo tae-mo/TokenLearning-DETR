@@ -1,2 +1,6 @@
 *.pyc
 */__pycache__/
+*pth
+*txt
+22*
+*/exp*

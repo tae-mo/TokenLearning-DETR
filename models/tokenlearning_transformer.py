@@ -120,9 +120,10 @@ class TransformerEncoder(nn.Module):
                 src_key_padding_mask: Optional[Tensor] = None,
                 pos: Optional[Tensor] = None):
         output = src
+        global_shortcut = output
 
         for i, layer in enumerate(self.layers, 1):
-            if i <= int(self.num_layers * self.insert_learner):
+            if i >= int(self.num_layers * self.insert_learner):
                 shortcut = output
                 output = self.learner(output, h, w)
                 output = layer(output, src_mask=mask,
@@ -131,6 +132,8 @@ class TransformerEncoder(nn.Module):
             else:    
                 output = layer(output, src_mask=mask,
                             src_key_padding_mask=src_key_padding_mask, pos=pos)
+            output += global_shortcut
+            global_shortcut = output
 
         if self.norm is not None:
             output = self.norm(output)
@@ -155,6 +158,7 @@ class TransformerDecoder(nn.Module):
                 pos: Optional[Tensor] = None,
                 query_pos: Optional[Tensor] = None):
         output = tgt
+        global_shortcut = output
 
         intermediate = []
 
@@ -164,6 +168,8 @@ class TransformerDecoder(nn.Module):
                            tgt_key_padding_mask=tgt_key_padding_mask,
                            memory_key_padding_mask=memory_key_padding_mask,
                            pos=pos, query_pos=query_pos)
+            output += global_shortcut
+            global_shortcut = output
             if self.return_intermediate:
                 intermediate.append(self.norm(output))
 
